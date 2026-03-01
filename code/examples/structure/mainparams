@@ -1,0 +1,26 @@
+Basic Program Parameters
+#define BURNIN    50000   // (int) length of burnin period
+#define NUMREPS   100000   // (int) number of MCMC reps after burnin
+
+Input/Output files
+
+#define INFILE brooktrout/brooktrout.txt
+
+Data file format
+#define NUMINDS    8454    // (int) number of diploid individuals in data file
+#define NUMLOCI    5    // (int) number of loci in data file
+#define PLOIDY     2    // (int) ploidy of data
+#define MISSING     -1    // (int) value given to missing genotype data
+#define ONEROWPERIND 0    // (B) store data for individuals in a single line
+
+#define LABEL       0     // Second column contains individual labels
+#define POPDATA     0     // First column contains population identifiers
+#define POPFLAG     0     // No population labels used
+
+#define PHENOTYPE   0     // No phenotype data
+#define EXTRACOLS   0     // No extra columns before genotype data
+
+#define MARKERNAMES 0 
+
+
+

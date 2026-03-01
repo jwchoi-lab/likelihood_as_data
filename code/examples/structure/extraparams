@@ -1,0 +1,56 @@
+PROGRAM OPTIONS
+
+#define NOADMIX     0 // (B) Use no admixture model (0=admixture model, 1=no-admix)
+#define LINKAGE     0 // (B) Use the linkage model 
+#define USEPOPINFO  0 // (B) Use prior population information to pre-assign individuals
+                             to clusters
+#define LOCPRIOR    0 //(B)  Use location information to improve weak data
+
+#define INFERALPHA  1 // (B) Infer ALPHA (the admixture parameter)
+#define POPALPHAS   1 // (B) Individual alpha for each population
+// #define ALPHA       1  // (d) Fixed Dirichlet parameter for admixture
+
+#define FREQSCORR   0 // (B) allele frequencies are correlated among pops
+#define INFERLAMBDA 0 // (B) Infer LAMBDA (the allele frequencies parameter)
+#define POPSPECIFICLAMBDA 0 //(B) infer a separate lambda for each pop 
+					(only if INFERLAMBDA=1).
+#define LAMBDA    1.0 // (d) Dirichlet parameter for allele frequencies 
+
+
+PRIORS
+#define UNIFPRIORALPHA 1 // (B) use a uniform prior for alpha;
+                                otherwise gamma prior
+#define ALPHAMAX     10.0 // (d) max value of alpha if uniform prior
+
+
+
+OUTPUT OPTIONS
+
+#define PRINTQSUM    1 // (B) Print summary of current population membership to screen
+#define PRINTQHAT    1  // (B) Q-hat printed to a separate file.  Turn this 
+                           on before using STRAT.
+#define UPDATEFREQ   1000  // (int) frequency of printing update on the screen.
+                                 Set automatically if this is 0.
+#define PRINTLIKES   0  // (B) print current likelihood to screen every rep
+#define INTERMEDSAVE 0  // (int) number of saves to file during run
+
+#define ECHODATA     1  // (B) Print some of data file to screen to check
+                              that the data entry is correct.
+
+
+MISCELLANEOUS
+#define ALPHAPROPSD 0.05 // (d) SD of proposal for updating alpha
+
+#define RANDOMIZE      0  // (B) use new random seed for each run 
+
+#define METROFREQ    5   // (int) Frequency of using Metropolis step to update
+                             Q under admixture model (ie use the metr. move every
+                             i steps).  If this is set to 0, it is never used.
+                             (Proposal for each q^(i) sampled from prior.  The 
+                             goal is to improve mixing for small alpha.)
+#define REPORTHITRATE 1 //   (B) report hit rate if using METROFREQ
+
+#define PRINTLOCUSINFO   1   // Save theta output
+
+
+
