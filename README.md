@@ -1,3 +1,33 @@
+# Robust Model Selection using Likelihood as Data
+
+## Software
+R (>= 4.3). Install all required packages with:
+    Rscript -e "install.packages('renv'); renv::restore()"
+
+## Reproducing the analyses
+
+Run the scripts in order from the repo root:
+
+| Script | Paper section | Output |
+|--------|---------------|--------|
+| `code/examples/01_shapley_gmm.R`          | Section 5.1      | Figures 1, 3 |
+| `code/examples/02_sparseMVN.R`            | Section 5.2      | Figures 4, 5 |
+| `code/examples/03_tpc.R`                  | Section 5.3      | Figure 6     |
+| `code/examples/04_structure_admixture.R`  | Section S3       | Figure S1    |
+| `code/theory/instability.R`               | Section 4.2      | Figure 2     |
+
+All scripts source `code/functions.R` automatically.
+Figures are saved to `output/`.
+
+## Data sources
+- **Shapley galaxies**: `data/raw/shapley/Shapley_galaxy.dat` (Drinkwater et al. 2004)
+- **TPC**: `data/raw/tpc/thermal_performance_datasets.csv` (Kontopoulos et al. 2024, CC-BY-4.0)
+- **Brook trout**: `data/raw/admixture/brooktrout.txt` (Erdman et al. 2022)
+- **MFM posteriors** (Julia): pre-computed in `data/processed/julia_run/`
+- **STRUCTURE runs**: pre-computed in `data/processed/structure_run/`
+
+
+
 JASA Reproducibility Materials Template
 ================
 

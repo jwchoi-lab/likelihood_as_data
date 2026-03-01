@@ -353,7 +353,7 @@ res <- purrr::map2_dfr(tau_grid, delta_grid, ~{
   xright <- pmin(.x + bin_width/2, 1)
   tibble(
     n = n, tau = .x, K=seq_len(K), complexities = complexities, 
-    sel_prob = as.numeric( selection_probabilities(mu_samples, complexities, delta = .y, alpha = a_n) ),
+    sel_prob = as.numeric( selection_probabilities(mu_samples, complexities, delta = .y, alpha_n = a_n) ),
     xleft = xleft, xright = xright, xmid = (xleft + xright)/2
   )
 })

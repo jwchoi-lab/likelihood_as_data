@@ -1,4 +1,3 @@
-# EM using MAP
 library(mclust)
 library(MASS)
 library(matrixStats)
@@ -7,94 +6,12 @@ library(dplyr)
 library(readr)
 library(tidyverse)
 library(cowplot)
+library(here)
 
-# Function to draw posterior samples of mu and Sigma using NIW conjugacy
-niw_posterior <- function(Z, mu0, lambda0, Psi0, nu0, n_samples) {
-  n <- nrow(Z)
-  K <- ncol(Z)
-  
-  # Compute sufficient statistics
-  Z_bar <- colMeans(Z)
-  Psi_obs <- t(Z - matrix(Z_bar, n, K, byrow = TRUE)) %*% (Z - matrix(Z_bar, n, K, byrow = TRUE))
-  
-  # Update posterior parameters
-  lambda_n <- lambda0 + n
-  mu_n <- (lambda0*mu0 + n*Z_bar)/lambda_n
-  nu_n <- nu0 + n
-  Psi_n <- Psi0 + Psi_obs + (lambda0*n/lambda_n)*(matrix(Z_bar-mu0, ncol=1) %*% matrix(Z_bar-mu0, nrow=1))
-  
-  mu_samples <- matrix(NA, nrow = n_samples, ncol = K)
-  Sigma_samples <- array(NA, dim = c(K, K, n_samples))
-  
-  # Draw posterior samples
-  for (i in 1:n_samples) {
-    # Sample Sigma from the Inverse-Wishart distribution
-    # Sigma <- solve(rwish(nu_n, solve(Psi_n)))
-    Sigma <- MCMCpack::riwish(nu_n, Psi_n)
-    
-    # Sample mu from the conditional Normal distribution given Sigma
-    mu <- mvtnorm::rmvnorm(1, mu_n, Sigma/lambda_n)
-    # mu <- mvrnorm(1, mu_n, Sigma / lambda_n)
-    
-    mu_samples[i, ] <- mu
-    Sigma_samples[, , i] <- Sigma
-  }
-  
-  return(list(mu = mu_samples, Sigma = Sigma_samples))
-}
+source(here::here("code","functions.R"))
 
 
-selection_probabilities <- function(mu_samples, complexities, delta, alpha) {
-  # mu_samples: S x K matrix of posterior draws for mu_k (e.g., negative log-likelihood)
-  # complexities: integer vector of length K specifying the complexity class for each model
-  # delta: numeric tolerance for "surviving" from the global best
-  # alpha: temperature parameter (positive)
-  
-  S <- nrow(mu_samples)  # number of posterior draws
-  K <- ncol(mu_samples)  # number of models
-  
-  class_selection_counts <- numeric(K) # Class selection indicator counts
-  weight_sums <- numeric(K) # Sum of performance weights
-  
-  for (s in seq_len(S)) {
-    mu_draw <- mu_samples[s, ]
-    
-    # Step 1: Determine the chosen complexity class for this draw
-    overall_best <- min(mu_draw)
-    surviving <- which(mu_draw <= overall_best + delta)
-    surviving_classes <- complexities[surviving]
-    chosen_class <- min(surviving_classes)
-    
-    selected_models <- which(complexities == chosen_class)
-    class_selection_counts[selected_models] <- class_selection_counts[selected_models] + 1
-    
-    # Step 2: Compute the weight.
-    for (k in seq_len(K)) {
-      class_k <- complexities[k]
-      models_in_class <- which(complexities == class_k)
-      mu_best_in_class <- min(mu_draw[models_in_class])
-      weight <- exp(-alpha * (mu_draw[k] - mu_best_in_class))
-      weight_sums[k] <- weight_sums[k] + weight
-    }
-  }
-  
-  # Compute the Monte Carlo estimates by averaging over S draws:
-  p_class <- class_selection_counts / S
-  avg_weight <- weight_sums / S
-  
-  # Overall model selection probability: product of the two components.
-  final_probs <- p_class * avg_weight
-  return(final_probs)
-}
-
-
-
-
-
-
-
-
-x <- read.csv("JuliaCode/Shapley/Output/251014_x_perm.csv")$x_perm
+x <- read.csv(here::here("data", "processed", "julia_run", "x_perm.csv"))$x_perm
 
 
 # sample_sizes <- c(40, 100, 120, 400, 1000, 1200, 2000, 4000)
@@ -436,54 +353,6 @@ p_row2a <- ggplot(df_draws, aes(x = factor(K), y = mu)) +
 p_row2a
 
 
-
-# mu_nk - mu^n*
-# delta_vals <- c(0.30, 0.12, 0.06)
-# names(delta_vals) <- paste0("delta_", K_pick)
-# colors_delta <- setNames(c("orange", "purple1", "green3"), names(delta_vals))
-# 
-# df_centered <- bind_rows(lapply(names(results_mu), function(nm) {
-#   M <- results_mu[[nm]]                 # S x K matrix
-#   mu_star <- apply(M, 1, min)           # per-draw minimum across K
-#   Mdiff <- sweep(M, 1, mu_star, "-")
-#   tibble(n = as.integer(nm),
-#          K = rep(seq_len(ncol(Mdiff)), each = nrow(Mdiff)),
-#          mu_diff = as.vector(Mdiff))
-# })) %>% filter(n %in% ns)
-# 
-# 
-# delta_lines <- expand.grid(n = ns,
-#                            delta_label = names(delta_vals),
-#                            KEEP.OUT.ATTRS = FALSE) %>%
-#   as_tibble() %>%
-#   mutate(delta = unname(delta_vals[delta_label]),
-#          label = paste0("delta==", format(round(delta, 2), nsmall = 2)))
-# 
-# p_row2b <- ggplot(df_centered, aes(x = factor(K), y = mu_diff)) +
-#   geom_hline(data = delta_lines, aes(yintercept = delta, color = delta_label), linewidth = 0.6, show.legend = FALSE) +
-#   geom_vline(xintercept = seq(1, 10, 1), color = "grey70", linewidth = 0.2, alpha=0.3) +
-#   geom_hline(yintercept = seq(0, 1, 0.25), color = "grey70", linewidth = 0.2, alpha=0.3) +
-#   geom_boxplot(width = 0.6, outlier.size = 0.3, color = "black", fill = "white") +
-#   scale_color_manual(values = colors_delta, name = NULL) +
-#   scale_y_continuous(limits = c(0, 1),
-#                      breaks  = c(0, 0.25, 0.5, 0.75, 1),
-#                      labels = c("0", "0.25", "0.50", "0.75", "1")) +
-#   facet_wrap(~ n, nrow = 1, labeller = labeller(n = function(v) paste0("n = ", v))) +
-#   labs(x = "k", y = expression(mu[n*k] - mu[n]^"*")) +
-#   theme_bw(base_size = 13) +
-#   theme(
-#     panel.grid = element_blank(),
-#     strip.text = element_text(size = 16),
-#     strip.background = element_rect(fill = "white", color = "black"),
-#     axis.title = element_text(size = 15),
-#     axis.text  = element_text(size = 13),
-#     axis.title.y = element_text(angle = 0, vjust = 0.5, margin = margin(r = 5))
-#   )
-# 
-# p_row2b
-# ggsave("Figures/251017_p_row2b.png", p_row2b, width = 10, height = 5, dpi = 300)
-
-
 ## Third row
 print(as.numeric(mu_means_4000[as.character(K_pick)] - min(mu_means_4000)))
 print(as.numeric(mu_means_4000[as.character(K_pick-1)] - min(mu_means_4000)))
@@ -502,7 +371,7 @@ res_fixed <- imap(results_mu, function(M, nm) {
   Kseq <- seq_len(ncol(M))
   
   imap_dfr(delta_vals, function(delta_val, lbl) {
-    w_hat <- selection_probabilities(M, complexities = Kseq, delta = delta_val, alpha = a_n)
+    w_hat <- selection_probabilities(M, complexities = Kseq, delta = delta_val, alpha_n = a_n)
     tibble(n = n_val, K = Kseq, delta = delta_val, delta_label = lbl, w_hat = as.numeric(w_hat))
   })
 }) %>%
@@ -590,7 +459,7 @@ for (nm in names(results_mu)) {
     xright <- pmin(.x + bin_width/2, 1)
     tibble(
       n = n_val, tau = .x, K=seq_len(K), complexities = complexities, 
-      sel_prob = as.numeric( selection_probabilities(mu_samples, complexities, delta = .y, alpha = a_n) ),
+      sel_prob = as.numeric( selection_probabilities(mu_samples, complexities, delta = .y, alpha_n = a_n) ),
       xleft = xleft, xright = xright, xmid = (xleft + xright)/2
     )
   })
