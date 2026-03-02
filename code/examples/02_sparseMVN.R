@@ -549,28 +549,6 @@ color_vals <- c(
   "BIC" = "green2"
 )
 
-# shape_vals <- c(
-#   "LaD-soft"              = 1,  # filled circle
-#   "LaD-hard"              = 19,  # filled triangle
-#   "LaD-diag"              = 21,  # filled square
-#   "c-post ($\\alpha = 10$)"  = 2,  
-#   "c-post ($\\alpha = 100$)" = 17,  
-#   "Bayes"                    = 24,  
-#   "AIC"                      = 5,   # filled star
-#   "BIC"                      = 23    # filled square cross
-# )
-
-
-# shape_vals <- c(
-#   "LaD-soft"              = 16,  # filled circle
-#   "LaD-hard"              = 17,  # filled triangle
-#   "LaD-diag"              = 15,  # filled square
-#   "c-post ($\\alpha = 10$)"  = 1,   # open circle
-#   "c-post ($\\alpha = 100$)" = 2,   # open triangle
-#   "Bayes"                    = 0,   # open square
-#   "AIC"                      = 8,   # star
-#   "BIC"                      = 4    # cross
-# )
 
 shape_vals <- c(
   "LaD-soft"                 = 1,  # open circle
@@ -646,13 +624,6 @@ p_metric <- ggplot(plot_df, aes(x = factor(n), y = E_brier, color = method_plot,
     color = guide_legend(nrow = 1, byrow = TRUE, override.aes = list(size = 3)),
     shape = guide_legend(nrow = 1, byrow = TRUE, override.aes = list(size = 3))
   ) +
-  # scale_color_manual(values = color_vals, limits = method_levels, labels = legend_labels, name = "Method",
-  #                    guide = guide_legend(nrow = 1, byrow = TRUE, override.aes = list(size = 3))) +
-  # scale_y_continuous(
-  #   limits = c(0, NA),            
-  #   breaks = scales::breaks_width(0.5),            
-  #   labels = function(b) sprintf("%.1f", b)
-  # ) +
   labs(
     x = "n",
     y = "Mean Brier loss with s.e."
@@ -672,7 +643,7 @@ p_metric <- ggplot(plot_df, aes(x = factor(n), y = E_brier, color = method_plot,
 
 
 
-# save for Figure 4
+# save for Figure 5
 # fig_dir <- here::here("output", "figures")
 # ggsave(file.path(fig_dir, "sparseMVN_fig5.png"), p_metric, width = 12, height = 5, dpi = 300)
 
