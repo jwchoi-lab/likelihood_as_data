@@ -1,5 +1,7 @@
+# 01_shapley_gmm.R
+# Shapley galaxy Gaussian mixtures (Figures 1 and 3)
+
 library(mclust)
-library(MASS)
 library(matrixStats)
 library(ggplot2)
 library(dplyr)
@@ -11,19 +13,35 @@ library(here)
 source(here::here("code","functions.R"))
 
 
+# For exact replication of the figures in the paper, we provide precomputed results in
+# output/shapley_gmm.RData:
+# load(here::here("output", "shapley_gmm.RData"))
+
+
+# Otherwise, the scripts below also allow recomputing the results from the raw data;
+# these may differ slightly due to random initialization in the Gaussian mixture fits, but yield the same qualitative conclusions.
+
+
+# Permuted Shapley galaxy velocities data
 x <- read.csv(here::here("data", "processed", "julia_run", "x_perm.csv"))$x_perm
 
-
-# sample_sizes <- c(40, 100, 120, 400, 1000, 1200, 2000, 4000)
+# Sample sizes used in the Shapley example
 sample_sizes <- c(40, 120, 400, 1200, 4000)
 
-Kmax <- 15
+Kmax <- 15 # maximum K
 
+# NIW prior hyperparameters for LaD posterior
 mu0 <- rep(0, Kmax)
 lambda0 <- 0.01
 nu0 <- Kmax + 2
 Psi0 <- diag(Kmax)
 n_post_samples <- 1000
+
+
+# -------------------------------------------------------------------
+# Fit Gaussian mixtures, build LaD matrix Z, AIC/BIC, LaD posterior
+# -------------------------------------------------------------------
+set.seed(20260303)  # for reproducibility of random initializations
 
 results_Z <- vector("list", length(sample_sizes))
 results_fits <- vector("list", length(sample_sizes))
@@ -36,11 +54,6 @@ for (n in sample_sizes) {
   cat("Fitting GMM for Sample size:", n, "\n")
   x_n <- x[1:n]
 
-  # nu <- 4
-  # s2n <- var(x_n)
-  # s0_2 <- s2n * (nu - 2)
-  # prior_n <- priorControl(dof = nu, scale = s0_2, mean = mean(x_n))
-  
   fits <- vector("list", Kmax)
   Z <- matrix(NA, nrow = n, ncol = Kmax)
   
@@ -50,10 +63,9 @@ for (n in sample_sizes) {
     n_restarts <- 50
     
     for (r in 1:n_restarts) {
-      # init <- list(subset = sample(seq_along(x_n), min(50, length(x_n))))
+      # Random hierarchical clustering initialization
       init <- list(hcPairs = hcRandomPairs(matrix(x_n, ncol = 1)))
       
-      # fit_try <- Mclust(x_n, G = K, modelNames = "E", prior = priorControl() )
       fit_try <- Mclust(x_n, G = K, modelNames = "V", prior = priorControl(dof=10), initialization = init)
       
       if (!is.null(fit_try$loglik) && fit_try$loglik > best_ll) {
@@ -67,18 +79,15 @@ for (n in sample_sizes) {
     
     pro <- pmax(as.numeric(fit$parameters$pro), .Machine$double.xmin) 
     ms <- as.numeric(fit$parameters$mean)      
-    # s2 <- max(as.numeric(fit$parameters$variance$sigmasq), .Machine$double.eps) # E
     s2 <- pmax(as.numeric(fit$parameters$variance$sigmasq), .Machine$double.eps)
    
-    
-    # Build an n x K matrix of log(pi_j phi_j(x_i)) and take row log-sum-exp
     logW <- matrix(NA, nrow = n, ncol = K)
     for (j in seq_len(K)) {
-      # logW[, j] <- log(pro[j]) + dnorm(x_n, mean = ms[j], sd = sqrt(s2), log = TRUE) # equal var
       logW[, j] <- log(pro[j]) + dnorm(x_n, mean = ms[j], sd = sqrt(s2[j]), log = TRUE)
     }
     Z[, K] <- -matrixStats::rowLogSumExps(logW)  # per-point NLL under the K-component mixture
     
+    # Bias correction dk/(2n) with dk = 3K - 1 
     dk <- 3*K-1
     Z[, K] <- Z[, K] + dk/(2*n)
   }
@@ -86,9 +95,8 @@ for (n in sample_sizes) {
   results_Z[[as.character(n)]] <- Z
   results_fits[[as.character(n)]] <- fits
   
-  # AIC/BIC
+  # AIC/BIC using the same log-likelihood definition
   logLik <- -colSums(Z)              
-  # dK <- 2*(1:Kmax)  # for E
   dK <- 3*(1:Kmax) - 1 # parameter count 
   AIC <- 2*dK - 2*logLik
   BIC <- log(n)*dK - 2*logLik
@@ -96,38 +104,33 @@ for (n in sample_sizes) {
   results_AIC[[as.character(n)]] <- AIC
   results_BIC[[as.character(n)]] <- BIC
   
-  # LaD
+  # LaD posterior draws
   mu_samples <- niw_posterior(Z, mu0, lambda0, Psi0, nu0, n_post_samples)$mu
-  
-  # lr_sd  <- sqrt(dK / (2*n^2))
-  # mu_samples <- mu_samples + matrix(
-  #   rnorm(n_post_samples * Kmax, mean = 0, sd = rep(lr_sd, each = n_post_samples)),
-  #   nrow = n_post_samples, ncol = Kmax, byrow = FALSE
-  # )
-  
-  
   results_mu[[as.character(n)]] <- mu_samples
 }
 
-# We onnly use K from 1 to 10 for LaD result
+# We onnly use K from 1 to 10 for LaD result in the figures
 results_mu <- lapply(results_mu, function(M) M[, 1:10])
-results_Z  <- lapply(results_Z,  function(Z) Z[, 1:10])
+results_Z <- lapply(results_Z,  function(Z) Z[, 1:10])
 
 
+# save results for later reuse 
 # save(results_mu, results_AIC, results_BIC, results_Z, results_fits, x,
-#      file = paste("Output/251016_shapley.Rdata"))
-# 
-
-load("Output/251016_shapley.Rdata")
+#      file = here::here("output", "shapley_gmm.RData"))
 
 
+
+
+
+
+# -------------------------------------------------------------------
 # Figure 1
-##(a)
+# -------------------------------------------------------------------
+
+## (a) Histogram of Shapley galaxy velocities
 p_left <- ggplot(data.frame(x = x), aes(x)) +
   geom_histogram(bins = 150, fill = "grey50", color = "grey50") +
   labs(x = "Velocity (1000 km/s)", y = NULL, title = "Shapley galaxy data") +
-  # geom_vline(xintercept = seq(0, 40, 5), color = "grey70", linewidth = 0.2, alpha=0.3) +
-  # geom_hline(yintercept = seq(0, 200, 25),, color = "grey70", linewidth = 0.2, alpha=0.3) +
   theme_bw(base_size = 13) +
   theme(
     panel.grid = element_blank(),
@@ -138,23 +141,19 @@ p_left <- ggplot(data.frame(x = x), aes(x)) +
     axis.title.y = element_text(angle = 0, vjust = 0.5, margin = margin(r = 5)),
   )
 
-p_left
+## (b) Boxplots of MFM posterior draws of K
+mfm_dir <- here::here("data", "processed", "julia_run", "MFM")
 
-
-##(b)
 read_k_draws <- function(n) {
-  f <- sprintf("JuliaCode/Shapley/Output/251215_MFM/mfm_n%05d_k_draws.csv", n)
-  if (!file.exists(f)) return(NULL)
-  read_csv(f, show_col_types = FALSE) %>%
+  f <- file.path(mfm_dir, sprintf("mfm_n%05d_k_draws.csv", n))
+  readr::read_csv(f, show_col_types = FALSE) %>%
     transmute(n = as.numeric(n), K = as.integer(K))
 }
 
-
 k_draws_df <- bind_rows(lapply(sample_sizes, read_k_draws))
 
-# outliers removed
 p_mid <- ggplot(k_draws_df, aes(x = factor(n), y = K)) +
-  geom_boxplot(outlier.shape = NA, width = 0.7, fill = "white", color = "black") +
+  geom_boxplot(outlier.shape = NA, width = 0.7, fill = "white", color = "black") + # outliers removed
   scale_y_continuous(breaks = c(5, 10, 15, 20, 25, 30), limits = c(1, 30)) +
   geom_vline(xintercept = k_draws_df$n, color = "grey70", linewidth = 0.2, alpha=0.3) +
   geom_hline(yintercept = seq(5, 30, 5), color = "grey70", linewidth = 0.2, alpha=0.3) +
@@ -168,11 +167,9 @@ p_mid <- ggplot(k_draws_df, aes(x = factor(n), y = K)) +
     axis.title.x = element_text(margin = margin(t = 4)),
     axis.title.y = element_text(angle = 0, vjust = 0.5, margin = margin(r = 5)),
   )
-p_mid
 
 
-
-##(c)
+## (c) AIC/BIC winners
 winners <- tibble(
   sample_size = sample_sizes,
   AIC = vapply(results_AIC, which.min, integer(1)),
@@ -182,13 +179,15 @@ winners <- tibble(
   mutate(sample_size_fac = factor(sample_size, levels = sample_sizes))
 
 
-p_right <- ggplot(winners, aes(x = sample_size_fac, y = K, group = criterion, color = criterion)) +
+p_right <- ggplot(winners, aes(x = sample_size_fac, y = K,
+                               group = criterion, color = criterion, linetype = criterion)) +
   geom_line(linewidth = 0.9) +
   geom_point(size = 2) +
   scale_y_continuous(breaks = c(3, 6, 9, 12, 15), limits = c(1, Kmax)) +
   geom_vline(xintercept = winners$sample_size_fac, color = "grey70", linewidth = 0.2, alpha=0.3) +
   geom_hline(yintercept = seq(3, 15, 3), color = "grey70", linewidth = 0.2, alpha=0.3) +
   scale_color_manual(values = c("AIC" = "red1", "BIC" = "blue1")) +
+  scale_linetype_manual(values = c("AIC" = "dashed", "BIC" = "solid"), guide="none") +
   labs(x = "n", y = "k", color = NULL, title = "Information Criteria") +
   theme_bw(base_size = 13) +
   theme(
@@ -204,28 +203,31 @@ p_right <- ggplot(winners, aes(x = sample_size_fac, y = K, group = criterion, co
     axis.title.x = element_text(margin = margin(t = 4)),
     axis.title.y = element_text(angle = 0, vjust = 0.5, margin = margin(r = 5)),
   )
-p_right
 
 
 
 fig1 <- gridExtra::grid.arrange(p_left, p_mid, p_right, ncol = 3)
-# ggsave("Figures/251215_shapley.png", fig1, width = 15, height = 5, dpi = 300)
+
+
+# save for Figure 1
+# fig_dir <- here::here("output", "figures")
+# ggsave(file.path(fig_dir, "shapley_fig1.png"), fig1, width = 15, height = 5, dpi = 300)
 
 
 
 
 
+# -------------------------------------------------------------------
+# Figure 3: four-row GMM plot
+# -------------------------------------------------------------------
 
-# GMM Plot
-ns <- c(40, 400, 4000)
-# ns <- sample_sizes
-## Top row
+ns <- c(40, 400, 4000) # subset of sample_sizes used in Figure 3
+
+## Top row: MFM posterior on K with AIC/BIC overlay
 read_k_pmf <- function(n) {
-  f <- file.path(sprintf("JuliaCode/Shapley/Output/251215_MFM/mfm_n%05d_k_posterior.csv", n))
-  if (!file.exists(f)) return(NULL)
-  read_csv(f, show_col_types = FALSE) %>%
-    rename(k = 1, prob = 2) %>%
-    mutate(k = as.integer(k), n = n)
+  f <- file.path(mfm_dir, sprintf("mfm_n%05d_k_posterior.csv", n))
+  readr::read_csv(f, show_col_types = FALSE) %>%
+    transmute(k = as.integer(k), prob = prob, n = n)
 }
 
 posterior_dfs <- bind_rows(lapply(ns, read_k_pmf)) %>%
@@ -265,10 +267,10 @@ p_row1_base <- ggplot(posterior_dfs, aes(k, prob)) +
 legend_pos <- tibble::tibble(
   n = factor(ns, levels = ns),
   x0 = 20, # left edge for legend glyphs
-  x1 = 24,  # text anchor to the right
+  x1 = 24, # text anchor to the right
   y_b = 0.22, # Bayes posterior row 
-  y_a = 0.2,   # AIC row
-  y_c = 0.18     # BIC row
+  y_a = 0.2, # AIC row
+  y_c = 0.18 # BIC row
 )
 
 
@@ -295,23 +297,14 @@ p_row1 <- p_row1_base +
             aes(x = x1, y = y_c, label = "BIC"),
             inherit.aes = FALSE, hjust = 0, vjust = 0.5, size = 5)
 
-p_row1
 
-
-
-## Second row
-# K_pick <- c(2,3,6)
+## Second row: posterior draws of LaD means mu_k
 K_pick <- c(2,3,4)
-
 mu_samples_4000 <- results_mu$`4000`
-
-
 mu_means_4000 <- colMeans(mu_samples_4000)
-
 names(mu_means_4000) <- as.character(seq_len(length(mu_means_4000)))
 
 levels_common <- mu_means_4000[as.character(K_pick)]
-
 
 tolerance_common <- tidyr::crossing(
   n = ns,
@@ -319,7 +312,6 @@ tolerance_common <- tidyr::crossing(
 ) %>%
   mutate(level = as.numeric(levels_common[as.character(Kline)]),
          Klab  = paste0("K=", Kline))
-
 
 df_draws <- do.call(
   rbind,
@@ -332,13 +324,10 @@ df_draws <- do.call(
   })
 ) %>% filter(n %in% ns)
 
-
-
 p_row2a <- ggplot(df_draws, aes(x = factor(K), y = mu)) +
   geom_boxplot(width = 0.6, outlier.size = 0.3, color = "black") +
   geom_vline(xintercept = seq(1, 10, 1), color = "grey70", linewidth = 0.2, alpha=0.3) +
   geom_hline(yintercept = seq(2.25, 4, 0.25), color = "grey70", linewidth = 0.2, alpha=0.3) +
-  # scale_color_manual(values = c("K=2"="#E67E22","K=3"="#6C5CE7","K=4"="#2ECC71")) +
   facet_wrap(~ n, nrow = 1, labeller = labeller(n = function(v) paste0("n = ", v))) +
   labs(x = "k", y = expression(mu[k])) +
   theme_bw(base_size = 20) +
@@ -350,13 +339,11 @@ p_row2a <- ggplot(df_draws, aes(x = factor(K), y = mu)) +
     axis.text  = element_text(size = 17),
     axis.title.y = element_text(angle = 0, vjust = 0.5, margin = margin(r = 5))
   ) 
-p_row2a
 
 
-## Third row
-print(as.numeric(mu_means_4000[as.character(K_pick)] - min(mu_means_4000)))
-print(as.numeric(mu_means_4000[as.character(K_pick-1)] - min(mu_means_4000)))
-
+## Third row: SLC scores for fixed deltas
+# print(as.numeric(mu_means_4000[as.character(K_pick)] - min(mu_means_4000)))
+# print(as.numeric(mu_means_4000[as.character(K_pick-1)] - min(mu_means_4000)))
 # mu_samples_4000[,K_pick] - rep(min(mu_samples_4000), 3) 
 
 delta_vals <- c(0.30, 0.12, 0.06)
@@ -424,11 +411,9 @@ p_row3 <- ggplot(res_fixed, aes(x = K, y = w_hat, fill = delta_label)) +
     axis.title.y = element_text(angle = 0, vjust = 0.5, margin = margin(r = 5))
   )
 
-p_row3
 
 
-
-## Last row - we should use same delta.. this is wrong!
+## Fourth row: SLC scores as a function of tau in [0,1]
 tau_grid <- seq(0, 1, length.out = 101)
 bin_width  <- min(diff(tau_grid))
 
@@ -475,11 +460,7 @@ res <- res %>%
   filter(n %in% ns) %>%
   mutate(n_f = factor(n, levels = n_levels))
 
-
-
-
 heat_cols <- c("white", "orange1", "orange2", "red1", "red3")
-
 
 p_row4 <- ggplot() +
   geom_rect(data = res,
@@ -488,14 +469,6 @@ p_row4 <- ggplot() +
                 fill = sel_prob)) +
   geom_vline(xintercept = seq(0, 1, 0.1), color = "grey70", linewidth = 0.2, alpha=0.3) +
   geom_hline(yintercept = 1:10, color = "grey70", linewidth = 0.2, alpha=0.3) +
-  # geom_rug(data = delta_guides,
-  #          aes(x = tau),
-  #          inherit.aes = FALSE,
-  #          sides = "b",                    # bottom only
-  #          color = "blue",
-  #          linewidth = 0.7,
-  #          length = grid::unit(6, "pt"),
-  #          alpha = 0.9) + 
   scale_fill_gradientn(
     name = expression(hat(w)[delta](k)),
     limits = c(0, 1),
@@ -504,8 +477,6 @@ p_row4 <- ggplot() +
     labels = c("0", "0.5", "1"),
     oob = scales::squish
   ) +
-  # geom_step(data = map_line, aes(x = xmid, y = K_map, group = n),
-  #           color = "black", linewidth = 0.9) +
   labs(y="k", x = expression(hat(tau))) +
   scale_x_continuous(
     breaks = seq(0, 1, 0.2),
@@ -536,10 +507,8 @@ p_row4 <- ggplot() +
     legend.title = element_text(size = 20)
   )  
 
-print(p_row4)
 
-
-
+# Assemble the 4-row figure (Figure 3)
 fig.gmm <- plot_grid(
   p_row1, p_row2a, p_row3, p_row4,
   ncol = 1, align = "v", axis = "l",
@@ -547,8 +516,9 @@ fig.gmm <- plot_grid(
 )
 fig.gmm
 
-ggsave("Figures/260225_gmm_result.png", fig.gmm, width = 15, height = 20, dpi = 300)
 
+# fig_dir <- here::here("output", "figures")
+# ggsave(file.path(fig_dir, "shapley_gmm_result.png"), fig.gmm, width = 15, height = 20, dpi = 300)
 
 
 

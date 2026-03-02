@@ -19,6 +19,12 @@ Run the scripts in order from the repo root:
 All scripts source `code/functions.R` automatically.
 Figures are saved to `output/`.
 
+### Reproducibility notes
+
+- `01_shapley_gmm.R`: For exact replication of the figures in the paper, we provide precomputed results in `output/shapley_gmm.RData`; 
+ recomputing from the raw Shapley data may give slightly different plots due to random initialization in the Gaussian mixture fits, but yield the same qualitative conclusions.
+
+
 ## Data sources
 - **Shapley galaxies**: `data/raw/shapley/Shapley_galaxy.dat` (Drinkwater et al. 2004)
 - **TPC**: `data/raw/tpc/thermal_performance_datasets.csv` (Kontopoulos et al. 2024, CC-BY-4.0)
