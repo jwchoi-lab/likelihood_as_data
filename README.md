@@ -37,10 +37,10 @@ All figures are saved to `output/`.
 
 Precomputed results are provided in `output/` for scripts that involve random initialization or Monte Carlo sampling, so loading these files produces figures identical to those in the paper. Results may differ slightly if re-run from scratch, but qualitative conclusions are unchanged. 
 
-- **`01_shapley_gmm.R`**: Precomputed fits in `output/shapley_gmm_fitted.RData` (Gaussian mixture EM across sample sizes). The MFM posterior uses precomputed Julia output from `data/processed/julia_run/`.
-- **`02_sparseMVN.R`**: Precomputed results in `output/sparseMVN_fitted.RData`.
-- **`03_tpc.R`**: Precomputed model fits in `output/tpc_fitted.RData`.
-- **`04_structure_admixture.R`**: Uses precomputed STRUCTURE output in `data/processed/structure_run/`.
+- **`01_shapley_gmm.R`**: Precomputed fits in `output/shapley_gmm_fitted.Rdata` (Gaussian mixture EM across sample sizes). The MFM posterior uses precomputed Julia output from `data/processed/julia_run/`.
+- **`02_sparseMVN.R`**: Precomputed results in `output/sparseMVN_fitted.Rdata`.
+- **`03_tpc.R`**: Precomputed model fits in `output/tpc_fitted.Rdata`.
+- **`04_structure_admixture.R`**: Uses precomputed results in `output/admixture_fitted.Rdata` and uses STRUCTURE output in `data/processed/structure_run/`.
 
 ---
 

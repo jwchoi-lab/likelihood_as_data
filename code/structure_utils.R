@@ -1,10 +1,33 @@
-# ----------------------------
-# Parse STRUCTURE output
-# ----------------------------
+## ------------------------------------------------------------------
+## Utilities for the STRUCTURE admixture example
+##
+## These helpers are used in the population structure example to:
+##  - read a STRUCTURE output file for a given K,
+##  - align the locus ordering in the STRUCTURE output with the genotype matrix X, and
+##  - compute per-individual negative log-likelihoods under the fitted admixture model, 
+##    integrating over ancestry proportions and latent population assignments (see Supplement S3–S4.4).
+## ------------------------------------------------------------------
+
+
+## ------------------------------------------------------------------
+## Parse STRUCTURE output
+##
+## For a single STRUCTURE run and a fixed number of populations K,
+## this function pulls out:
+##  - alpha_j: mean admixture concentration parameters,
+##  - theta_{k,l}: allele frequency vectors for each population k and locus l, 
+##  - the allele labels used at each locus.
+##
+## It also records a few summary diagnostics reported by STRUCTURE:
+##  - Estimated Ln Prob of Data,
+##  - Mean value of ln likelihood,
+##  - Variance of ln likelihood.
+## ------------------------------------------------------------------
 parse_structure_results <- function(f, K) {
+  # Read the file once;
   lines <- readLines(f, warn = FALSE)
   txt <- paste(lines, collapse = " ")
-  
+
   # alpha: try "alpha_j", else single "alpha"
   alpha <- NULL
   m1 <- gregexpr("Mean value of alpha_[0-9]+ *= *-?[0-9]+\\.?[0-9]*", txt)
@@ -77,6 +100,18 @@ parse_structure_results <- function(f, K) {
 }
 
 
+## ------------------------------------------------------------------
+## Match locus ordering between X and STRUCTURE output
+##
+## The raw genotype matrix X stores alleles as:
+##   (locus 1 copy 1, locus 1 copy 2, locus 2 copy 1, locus 2 copy 2, ...)
+##
+## The STRUCTURE output may list loci in a different order. This function constructs a permutation that best aligns the two orderings, 
+## based on the overlap of observed allele labels at each locus (Jaccard similarity).
+##
+## Returns: an integer vector 'map' of length L such that map[d] = l
+## means "locus d in X corresponds to locus l in the STRUCTURE output".
+## ------------------------------------------------------------------
 
 find_locus_map <- function(X, labels) {
   L  <- ncol(X) / 2
@@ -105,6 +140,26 @@ find_locus_map <- function(X, labels) {
 }
 
 
+
+## ------------------------------------------------------------------
+## Per-individual negative log-likelihoods for the admixture model
+##
+## Given:
+##  - X: n x (2L) genotype matrix; columns are allele copies
+##       (locus 1 copy 1, locus 1 copy 2, ..., locus L copy 2),
+##  - alpha: length-K Dirichlet parameters (one per population),
+##  - theta: list of length K; theta[[k]][[l]] is a vector of allele frequencies for population k at locus l,
+##  - labels: list of length L; labels[[l]] is the vector of allele codes corresponding to theta[[k]][[l]],
+##
+## this function returns an n x 2 data.frame with:
+##  - ind: individual index (row of X),
+##  - nll: Monte Carlo estimate of -log p(x_i | alpha, theta),
+## integrating out both the ancestry proportions q_i ~ Dirichlet(alpha) and the latent population assignments as in Supplement S4.4.
+##
+## For K = 1, the admixture model reduces to a single population and
+## we can compute the likelihood exactly. For K > 1, we approximate
+## the Dirichlet integral with S Monte Carlo samples of q_i.
+## ------------------------------------------------------------------
 compute_point_nll <- function(X, alpha, theta, labels, S = 1000, eps = 1e-12, auto_map = TRUE) {
   n <- nrow(X); P <- ncol(X); L <- P/2; K <- length(theta)
   

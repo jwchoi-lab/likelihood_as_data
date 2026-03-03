@@ -10,6 +10,7 @@ library(ggplot2)
 library(cowplot)
 
 source(here::here("code", "functions.R"))
+source(here::here("code", "structure_utils.R"))
 
 
 # Read Data

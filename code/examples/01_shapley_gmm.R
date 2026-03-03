@@ -3,9 +3,6 @@
 
 library(mclust)
 library(matrixStats)
-library(ggplot2)
-library(dplyr)
-library(readr)
 library(tidyverse)
 library(cowplot)
 library(here)
