@@ -160,7 +160,7 @@ for (sim in 1:n_sim) {
       mutate(i = row_number()) %>%
       pivot_longer(-i, names_to = "model_idx", values_to = "Zik") %>%
       mutate(k = as.integer(sub("V","", model_idx))) %>%
-      select(i, k, Zik) %>%
+      dplyr::select(i, k, Zik) %>%
       mutate(sim = sim, sample_size = n, .before = 1)
     
     store_Z[[length(store_Z) + 1]] <- df_Z
@@ -178,7 +178,7 @@ for (sim in 1:n_sim) {
              complexity = complexities[k],
              method = "LaD_NIW",
              sim = sim, n = n, .before = 1) %>%
-      select(sim, n, k, complexity, method, draw, mu_sample)
+      dplyr::select(sim, n, k, complexity, method, draw, mu_sample)
     
     # NIG
     df_nig <- as_tibble(mu_nig) %>%
@@ -188,7 +188,7 @@ for (sim in 1:n_sim) {
              complexity = complexities[k],
              method = "LaD_NIG",
              sim = sim, n = n, .before = 1) %>%
-      select(sim, n, k, complexity, method, draw, mu_sample)
+      dplyr::select(sim, n, k, complexity, method, draw, mu_sample)
     
     lad_rows[[length(lad_rows)+1]] <- bind_rows(df_niw, df_nig)
     
@@ -260,7 +260,7 @@ df_mu_noise <- df_x_all %>%
   summarise(mean_row_sqsum = mean(row_sqsum), .groups = "drop") %>%
   left_join(df_d, by = c("sim","sample_size")) %>%
   mutate(mu_noise = (d/2) * log(2*pi) + 0.5 * mean_row_sqsum) %>%
-  select(sim, sample_size, mu_noise)
+  dplyr::select(sim, sample_size, mu_noise)
 
 # mu_star(sim,n) = min_k mean_i Z_{ik}
 df_mu_star <- df_Z_all %>%
@@ -324,9 +324,9 @@ for (delta in delta_values) {
         if (nrow(df_this) > 0) {
           # S x K mu-samples matrix
           mat_mu <- df_this %>%
-            select(draw, k, mu_sample) %>%
+            dplyr::select(draw, k, mu_sample) %>%
             pivot_wider(names_from = k, values_from = mu_sample) %>%
-            select(as.character(seq_len(K))) %>%
+            dplyr::select(as.character(seq_len(K))) %>%
             as.matrix()
           
           # soft-minimum 
@@ -433,7 +433,7 @@ labels_delta <- setNames(
 plot_dat <- df_scores %>%
   filter(n %in% c(50, 500, 5000)) %>% 
   filter(method == "LaD_FC_soft") %>%
-  select(sim, n, delta, tau, k, score) %>%
+  dplyr::select(sim, n, delta, tau, k, score) %>%
   mutate(
     sample_size = factor(n, levels = sort(unique(n))),
     model = factor(k, labels=c(1:K)), 

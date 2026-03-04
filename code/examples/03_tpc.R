@@ -22,11 +22,11 @@ dat.all <- read_csv(
 #   count(taxon, sort = TRUE) %>%
 #   slice_max(n, n = 10) 
 
-pm_dat <- dat.all |>
+pm_dat <- dat.all %>%
   filter(taxon == "Prorocentrum minimum",
          trait == "growth rate") %>%
   filter(str_detect(citation, "Loma")==FALSE) %>%
-  select(temperature, trait_value) %>%
+  dplyr::select(temperature, trait_value) %>%
   rename(temp = temperature) 
 
 # ggplot(pm_dat, aes(x = temp, y = trait_value)) +
@@ -437,7 +437,7 @@ resid_df <- purrr::imap_dfr(fit_list, function(fit, model) {
 })
 
 curve_df <- resid_df %>%
-  select(model, temp, fitted) %>%
+  dplyr::select(model, temp, fitted) %>%
   distinct()
 
 

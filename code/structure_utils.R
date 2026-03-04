@@ -124,11 +124,11 @@ find_locus_map <- function(X, labels) {
     a <- Sx[[d]]; b <- Sl[[l]]
     if (length(a) == 0L && length(b) == 0L) { C[d,l] <- 1; next }
     if (length(a) == 0L || length(b) == 0L) { C[d,l] <- 0; next }
-    C[d,l] <- length(intersect(a,b))/length(union(a,b))
+    C[d,l] <- length(intersect(a,b)) / length(union(a,b))
   }
   
   # greedy assignment (fine for small L). 
-  map <- rep(NA_integer_, L); used <- rep(FALSE, L)
+  map <- rep(NA, L); used <- rep(FALSE, L)
   order_d <- order(apply(C, 1, max), decreasing = TRUE)
   for (d in order_d) {
     s <- C[d, ]; s[used] <- -Inf

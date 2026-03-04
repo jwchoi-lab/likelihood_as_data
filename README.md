@@ -117,6 +117,6 @@ All datasets are included to facilitate reproduction of the results. Please cite
 - Miller & Harrison (2018). Mixture models with a prior on the number of components. *Journal of American Statistical Association*, 113(521), 340–356.
 - Pritchard et al. (2000). Inference of population structure using multilocus genotype data. *Genetics*, 155(2), 945–959.
 - Drinkwater et al. (2004). The large scale distribution of galaxies in the Shapley supercluster. *Publications of the Astronomical Society of Australia*, 21(1), 89–96.
-- Kontopoulos et al. (2024). No universal mathematical model for thermal performance curves. *Nature Communications*, 15(1), 8855. Data: [doi:10.6084/m9.figshare.24106161.v2](https://doi.org/10.6084/m9.figshare.24106161.v2).
+- Kontopoulos et al. (2024). No universal mathematical model for thermal performance curves. *Nature Communications*, 15(1), 8855. 
 - Grzebyk & Berland (1996). Influences of temperature, salinity and irradiance on growth of *Prorocentrum minimum*. *Journal of Plankton Research*, 18(10), 1837–1849.
-- Erdman et al. (2022). Broadscale population structure and hatchery introgression of Midwestern Brook Trout. *Transactions of the American Fisheries Society*, 151(1), 81–99. [doi:10.1002/tafs.10333](https://doi.org/10.1002/tafs.10333).
+- Erdman et al. (2022). Broadscale population structure and hatchery introgression of Midwestern Brook Trout. *Transactions of the American Fisheries Society*, 151(1), 81–99.

@@ -21,8 +21,6 @@
 #'
 #' @return mu : n_samples x K matrix of posterior draws of mu
 #' @return Sigma : K x K x n_samples array of posterior draws of Sigma
-#'
-#' @examples
 
 niw_posterior <- function(Z, mu0, lambda0, Psi0, nu0, n_samples) {
   n <- nrow(Z)
@@ -77,8 +75,6 @@ niw_posterior <- function(Z, mu0, lambda0, Psi0, nu0, n_samples) {
 #'
 #' @return mu : n_samples x K matrix of posterior draws of mu
 #' @return sigma2 : n_samples x K matrix of posterior draws of the variances
-#'
-#' @examples
 
 nig_posterior <- function(Z, mu0, lambda0, a0, b0, n_samples) {
   # Independent NIG posterior per column (diagonal Covariance Sigma)
@@ -126,8 +122,6 @@ nig_posterior <- function(Z, mu0, lambda0, a0, b0, n_samples) {
 #' @param tol : tie tolerance used in mode = "hard", default is 1e-12
 #'
 #' @return numeric vector of length K with the SLC score for each model
-#'
-#' @examples
 
 selection_probabilities <- function(mu_samples, complexities, delta, alpha_n,
                                     mode = c("soft", "hard"), tol = 1e-12) {
@@ -190,8 +184,6 @@ selection_probabilities <- function(mu_samples, complexities, delta, alpha_n,
 #'
 #' @return tibble with columns: k (model index), prob (posterior probability),
 #'   logml (log marginal power likelihood), alpha, zeta_n
-#'
-#' @examples
 
 coarsen_post_probs <- function(x, models, alpha,
                                kappa0 = 0.01,     
@@ -226,10 +218,10 @@ coarsen_post_probs <- function(x, models, alpha,
   post <- exp(w); post <- post / sum(post)
   
   tibble::tibble(
-    k      = seq_len(K),
-    prob   = post,
-    logml  = logml,
-    alpha  = alpha,
+    k = seq_len(K),
+    prob = post,
+    logml = logml,
+    alpha = alpha,
     zeta_n = zeta_n
   )
 }

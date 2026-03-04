@@ -375,5 +375,3 @@ evanno_plot <- grid.arrange(pA, pB, pD, ncol = 3)
 # fig_dir <- here::here("output", "figures")
 # ggsave(file.path(fig_dir, "admixture_figS1.png"), fig.ad, width = 15, height = 5, dpi = 300)
 # ggsave(file.path(fig_dir, "admixture_figS2.png"), evanno_plot, width = 15, height = 5, dpi = 300)
-
-
