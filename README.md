@@ -30,7 +30,7 @@ All scripts source `code/functions.R`, which contains the core LaD functions. Ru
 | `code/examples/04_structure_admixture.R`  | Section S3       | Figure S1, S2    |
 | `code/theory/instability.R`               | Section 4.2      | Figure 2     |
 
-All figures are saved to `output/`.
+All figures are saved to `output/figures`.
 
 
 ### Reproducibility notes
