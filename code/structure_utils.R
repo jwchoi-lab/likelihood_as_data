@@ -12,11 +12,7 @@
 ## ------------------------------------------------------------------
 ## Parse STRUCTURE output
 ##
-## For a single STRUCTURE run and a fixed number of populations K,
-## this function pulls out:
-##  - alpha_j: mean admixture concentration parameters,
-##  - theta_{k,l}: allele frequency vectors for each population k and locus l, 
-##  - the allele labels used at each locus.
+## For a single STRUCTURE run and a fixed number of populations K, this function pulls out alpha_j, theta_{k,l}, and the allele labels used at each locus.
 ##
 ## It also records a few summary diagnostics reported by STRUCTURE:
 ##  - Estimated Ln Prob of Data,
@@ -28,7 +24,7 @@ parse_structure_results <- function(f, K) {
   lines <- readLines(f, warn = FALSE)
   txt <- paste(lines, collapse = " ")
 
-  # alpha: try "alpha_j", else single "alpha"
+  # alpha: try alpha_j, else single alpha
   alpha <- NULL
   m1 <- gregexpr("Mean value of alpha_[0-9]+ *= *-?[0-9]+\\.?[0-9]*", txt)
   hits1 <- regmatches(txt, m1)[[1]]
@@ -40,7 +36,7 @@ parse_structure_results <- function(f, K) {
       a <- as.numeric(sub(".*= *", "", regmatches(txt, m2)))
       alpha <- rep(a, K)
     } else {
-      alpha <- rep(NA_real_, K)
+      alpha <- rep(NA, K)
     }
   }
   
@@ -48,7 +44,7 @@ parse_structure_results <- function(f, K) {
   locus_starts <- grep("^Locus [0-9]+", lines)
   L <- length(locus_starts)
   
-  # per-locus: allele labels (as printed) and per-k frequency vectors
+  # per-locus: allele labels and per-k frequency vectors
   labels <- vector("list", L)
   theta_by_k <- vector("list", K)
   for (k in seq_len(K)) theta_by_k[[k]] <- vector("list", L)
@@ -82,7 +78,6 @@ parse_structure_results <- function(f, K) {
     }
   }
   
-  # summary numbers
   get_num <- function(pattern) {
     m <- regexpr(pattern, txt)
     if (m == -1) return(NA_real_)
@@ -90,9 +85,9 @@ parse_structure_results <- function(f, K) {
   }
   
   list(
-    alpha = alpha, # numeric length K
-    theta = theta_by_k, # list length K; each is list length L (numeric vectors)
-    labels = labels, # list length L (allele codes per locus)
+    alpha = alpha, 
+    theta = theta_by_k, 
+    labels = labels, 
     estimated_ln_prob  = get_num("Estimated Ln Prob of Data *= *-?[0-9]+\\.?[0-9]*"),
     mean_ln_likelihood = get_num("Mean value of ln likelihood *= *-?[0-9]+\\.?[0-9]*"),
     var_ln_likelihood  = get_num("Variance of ln likelihood *= *[0-9]+\\.?[0-9]*")
@@ -109,8 +104,7 @@ parse_structure_results <- function(f, K) {
 ## The STRUCTURE output may list loci in a different order. This function constructs a permutation that best aligns the two orderings, 
 ## based on the overlap of observed allele labels at each locus (Jaccard similarity).
 ##
-## Returns: an integer vector 'map' of length L such that map[d] = l
-## means "locus d in X corresponds to locus l in the STRUCTURE output".
+## Returns: an integer vector 'map' of length L such that map[d] = l means "locus d in X corresponds to locus l in the STRUCTURE output".
 ## ------------------------------------------------------------------
 
 find_locus_map <- function(X, labels) {
@@ -118,7 +112,6 @@ find_locus_map <- function(X, labels) {
   Sx <- lapply(seq_len(L), function(d) unique(na.omit(c(X[,2*d-1], X[,2*d]))))
   Sl <- labels
   
-  # Jaccard similarity between dataset-locus d and parsed-locus l
   C <- matrix(0, nrow = L, ncol = L)
   for (d in seq_len(L)) for (l in seq_len(L)) {
     a <- Sx[[d]]; b <- Sl[[l]]
@@ -127,7 +120,6 @@ find_locus_map <- function(X, labels) {
     C[d,l] <- length(intersect(a,b)) / length(union(a,b))
   }
   
-  # greedy assignment (fine for small L). 
   map <- rep(NA, L); used <- rep(FALSE, L)
   order_d <- order(apply(C, 1, max), decreasing = TRUE)
   for (d in order_d) {
@@ -145,8 +137,7 @@ find_locus_map <- function(X, labels) {
 ## Per-individual negative log-likelihoods for the admixture model
 ##
 ## Given:
-##  - X: n x (2L) genotype matrix; columns are allele copies
-##       (locus 1 copy 1, locus 1 copy 2, ..., locus L copy 2),
+##  - X: n x (2L) genotype matrix; columns are allele copies (locus 1 copy 1, locus 1 copy 2, ..., locus L copy 2),
 ##  - alpha: length-K Dirichlet parameters (one per population),
 ##  - theta: list of length K; theta[[k]][[l]] is a vector of allele frequencies for population k at locus l,
 ##  - labels: list of length L; labels[[l]] is the vector of allele codes corresponding to theta[[k]][[l]],
@@ -156,9 +147,8 @@ find_locus_map <- function(X, labels) {
 ##  - nll: Monte Carlo estimate of -log p(x_i | alpha, theta),
 ## integrating out both the ancestry proportions q_i ~ Dirichlet(alpha) and the latent population assignments as in Supplement S4.4.
 ##
-## For K = 1, the admixture model reduces to a single population and
-## we can compute the likelihood exactly. For K > 1, we approximate
-## the Dirichlet integral with S Monte Carlo samples of q_i.
+## For K = 1, the admixture model reduces to a single population and we can compute the likelihood exactly. 
+## For K > 1, we approximate the Dirichlet integral with S Monte Carlo samples of q_i.
 ## ------------------------------------------------------------------
 compute_point_nll <- function(X, alpha, theta, labels, S = 1000, eps = 1e-12, auto_map = TRUE) {
   n <- nrow(X); P <- ncol(X); L <- P/2; K <- length(theta)
@@ -173,11 +163,11 @@ compute_point_nll <- function(X, alpha, theta, labels, S = 1000, eps = 1e-12, au
   nll <- rep(0, n)
   
   if (K == 1) {
-    th1 <- theta[[1]]  # list length L of numeric vectors (probs aligned to labels[[l]])
+    th1 <- theta[[1]]  
     for (i in seq_len(n)) {
       xi <- as.integer(X[i, ])
       obs <- which(!is.na(xi))
-      ll <- 0.0
+      ll <- 0
       for (j in obs) {
         l <- ceiling(j/2)
         v <- xi[j]
