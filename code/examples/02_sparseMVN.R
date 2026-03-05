@@ -10,6 +10,7 @@ library(matrixStats)
 library(latex2exp)
 library(cowplot)
 library(grid)
+library(RColorBrewer)
 
 source(here::here("code", "functions.R"))
 
@@ -536,18 +537,9 @@ method_levels <- c(
   "AIC", "BIC"
 )
 
-color_vals <- c(
-  "LaD-soft" = "red2",
-  "LaD-hard" = "magenta",
-  "LaD-diag" = "darkorange1",
-  
-  "c-post ($\\alpha = 10$)"  = "blue",
-  "c-post ($\\alpha = 100$)" = "skyblue2",
-  "Bayes" = "cyan",
-  
-  "AIC" = "seagreen3",
-  "BIC" = "green2"
-)
+
+dark2_colors <- brewer.pal(8, "Dark2")
+color_vals <- setNames(dark2_colors, method_levels)
 
 
 shape_vals <- c(
@@ -556,7 +548,7 @@ shape_vals <- c(
   "LaD-diag"                 = 0,  # open square
   "c-post ($\\alpha = 10$)"  = 5,  # open diamond
   "c-post ($\\alpha = 100$)" = 6,  # open triangle down
-  "Bayes"                    = 13,  # open circle with X
+  "Bayes"                    = 11,  # open circle with X
   "AIC"                      = 4,  # x
   "BIC"                      = 7   # open rec with X
 )
@@ -621,8 +613,8 @@ p_metric <- ggplot(plot_df, aes(x = factor(n), y = E_brier, color = method_plot,
     name   = "Method"
   ) +
   guides(
-    color = guide_legend(nrow = 1, byrow = TRUE, override.aes = list(size = 3)),
-    shape = guide_legend(nrow = 1, byrow = TRUE, override.aes = list(size = 3))
+    color = guide_legend(nrow = 1, byrow = TRUE, override.aes = list(size = 3, linetype = 0, linewidth = 0)),
+    shape = guide_legend(nrow = 1, byrow = TRUE, override.aes = list(size = 3, linetype = 0, linewidth = 0))
   ) +
   labs(
     x = "n",
@@ -640,7 +632,7 @@ p_metric <- ggplot(plot_df, aes(x = factor(n), y = E_brier, color = method_plot,
     legend.title = element_text(size = 14)
   )
 
-
+p_metric
 
 
 # save for Figure 5

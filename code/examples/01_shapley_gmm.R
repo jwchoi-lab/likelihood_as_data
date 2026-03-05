@@ -10,6 +10,16 @@ library(here)
 source(here::here("code","functions.R"))
 
 
+# Permuted Shapley galaxy velocities data
+x <- read.csv(here::here("data", "processed", "julia_run", "x_perm.csv"))$x_perm
+
+# Sample sizes used in the Shapley example
+sample_sizes <- c(40, 120, 400, 1200, 4000)
+
+Kmax <- 15 # maximum K
+
+
+
 # For exact replication of the figures in the paper, we provide precomputed results in
 # output/shapley_gmm_fitted.Rdata:
 # load(here::here("output", "shapley_gmm_fitted.Rdata"))
@@ -19,13 +29,6 @@ source(here::here("code","functions.R"))
 # these may differ slightly due to random initialization in the Gaussian mixture fits, but yield the same qualitative conclusions.
 
 
-# Permuted Shapley galaxy velocities data
-x <- read.csv(here::here("data", "processed", "julia_run", "x_perm.csv"))$x_perm
-
-# Sample sizes used in the Shapley example
-sample_sizes <- c(40, 120, 400, 1200, 4000)
-
-Kmax <- 15 # maximum K
 
 # NIW prior hyperparameters for LaD posterior
 mu0 <- rep(0, Kmax)
@@ -113,8 +116,8 @@ results_Z <- lapply(results_Z,  function(Z) Z[, 1:10])
 
 
 # save results for later reuse 
-save(results_mu, results_AIC, results_BIC, results_Z, results_fits, x,
-     file = here::here("output", "shapley_gmm_fitted.Rdata"))
+# save(results_mu, results_AIC, results_BIC, results_Z, results_fits, x,
+#      file = here::here("output", "shapley_gmm_fitted.Rdata"))
 
 
 
@@ -184,8 +187,8 @@ p_right <- ggplot(winners, aes(x = sample_size_fac, y = K,
   scale_y_continuous(breaks = c(3, 6, 9, 12, 15), limits = c(1, Kmax)) +
   geom_vline(xintercept = winners$sample_size_fac, color = "grey70", linewidth = 0.2, alpha=0.3) +
   geom_hline(yintercept = seq(3, 15, 3), color = "grey70", linewidth = 0.2, alpha=0.3) +
-  scale_color_manual(values = c("AIC" = "red1", "BIC" = "blue1")) +
-  scale_linetype_manual(values = c("AIC" = "dashed", "BIC" = "solid"), guide="none") +
+  scale_color_manual(values = c("AIC" = "red1", "BIC" = "blue1"), name = NULL) +
+  scale_linetype_manual(values = c("AIC" = "dashed", "BIC" = "solid"), name = NULL) +
   labs(x = "n", y = "k", color = NULL, title = "Information Criteria") +
   theme_bw(base_size = 13) +
   theme(
@@ -194,7 +197,8 @@ p_right <- ggplot(winners, aes(x = sample_size_fac, y = K,
     axis.text  = element_text(size = 15),
     legend.title = element_text(size = 20),
     legend.text = element_text(size = 20),
-    legend.position = c(0.12, 0.8),    
+    legend.key.width = unit(1.5, "cm"),
+    legend.position = c(0.2, 0.8),    
     legend.background = element_rect(fill = alpha("white", 0.7), color = NA),
     legend.key = element_blank(),
     plot.title = element_text(hjust = 0.5, size = 20),
