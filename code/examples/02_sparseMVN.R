@@ -472,7 +472,7 @@ summary_plot <- ggplot(plot_dat_bar, aes(x = model, y = score, fill = delta, col
 
 # Mu plot
 df_LaD_NIW <- df_LaD %>%
-  dplyr::filter(method == "LaD_NIW", n %in% c(50, 500, 5000), sim == 25) 
+  dplyr::filter(method == "LaD_NIW", n %in% c(50, 500, 5000), sim == 2) 
 
 K_max <- 7
 
@@ -497,17 +497,113 @@ p_mu <- ggplot(df_LaD_NIW, aes(x = factor(k), y = mu_sample)) +
   )
 
 
+# Posterior path heatmap over tau
+plot_sim <- 2 
+
+tau_grid <- seq(0, 1, length.out = 101)
+bin_width <- min(diff(tau_grid))
+heat_cols <- c("white", "orange1", "orange2", "red1", "red3")
+
+path_dat <- purrr::map_dfr(sample_sizes, function(n_val) {
+  
+  denom <- df_tau %>%
+    dplyr::filter(sim == plot_sim, n == n_val) %>%
+    dplyr::distinct(denom) %>%
+    dplyr::pull(denom)
+  
+  mat_mu <- df_LaD %>%
+    dplyr::filter(sim == plot_sim, n == n_val, method == "LaD_NIW") %>%
+    dplyr::arrange(draw, k) %>%
+    dplyr::select(draw, k, mu_sample) %>%
+    tidyr::pivot_wider(names_from = k, values_from = mu_sample) %>%
+    dplyr::select(as.character(seq_len(K))) %>%
+    as.matrix()
+  
+  purrr::map2_dfr(tau_grid, denom * tau_grid, ~{
+    tibble::tibble(
+      sim = plot_sim,
+      n = n_val,
+      tau = .x,
+      k = seq_len(K),
+      score = as.numeric(
+        selection_probabilities(
+          mat_mu, complexities,
+          delta = .y,
+          alpha_n = n_val^(0.45)
+        )
+      ),
+      xleft = pmax(.x - bin_width/2, 0),
+      xright = pmin(.x + bin_width/2, 1)
+    )
+  })
+}) %>%
+  dplyr::mutate(sample_size = factor(n, levels = sample_sizes))
+
+p_path <- ggplot() +
+  geom_rect(
+    data = path_dat,
+    aes(
+      xmin = xleft, xmax = xright,
+      ymin = k - 0.5, ymax = k + 0.5,
+      fill = score
+    )
+  ) +
+  geom_vline(xintercept = seq(0, 1, 0.1), color = "grey70", linewidth = 0.2, alpha = 0.3) +
+  geom_hline(yintercept = seq_len(K), color = "grey70", linewidth = 0.2, alpha = 0.3) +
+  scale_fill_gradientn(
+    name = expression(hat(w)[delta](k)),
+    limits = c(0, 1),
+    colours = heat_cols,
+    breaks = c(0, 0.5, 1),
+    labels = c("0", "0.5", "1"),
+    oob = scales::squish
+  ) +
+  labs(y = "k", x = expression(hat(tau))) +
+  scale_x_continuous(
+    breaks = seq(0, 1, 0.2),
+    labels = function(x) ifelse(x %in% c(0, 1), as.character(x), sprintf("%.1f", x)),
+    limits = c(0, 1)
+  ) +
+  scale_y_continuous(breaks = seq_len(K)) +
+  facet_wrap(
+    ~ sample_size, nrow = 1,
+    labeller = labeller(sample_size = function(v) paste0("n = ", v))
+  ) +
+  guides(
+    fill = guide_colorbar(
+      barwidth = unit(5, "cm"),
+      barheight = unit(0.7, "cm"),
+      title.position = "left",
+      title.hjust = 0.7,
+      title.vjust = 0.9
+    )
+  ) +
+  theme_bw(base_size = 20) +
+  theme(
+    panel.grid = element_blank(),
+    strip.text = element_text(size = 18),
+    strip.background = element_rect(fill = "white", color = "black"),
+    axis.title = element_text(size = 18),
+    axis.text  = element_text(size = 15),
+    axis.title.y = element_text(angle = 0, vjust = 0.5, margin = margin(r = 5)),
+    legend.position = "bottom",
+    legend.text = element_text(size = 15),
+    legend.title = element_text(size = 18)
+  )
+
+
+
 fig.mvn <- plot_grid(
-  summary_plot, p_mu, 
+  summary_plot, p_mu, p_path,
   ncol = 1, align = "v", axis = "l",
-  rel_heights = c(2, 1) 
+  rel_heights = c(2, 1, 1.5) 
 )
 fig.mvn
 
 
 # save for Figure 4
-# fig_dir <- here::here("output", "figures")
-# ggsave(file.path(fig_dir, "sparseMVN_fig4.png"), fig.mvn, width = 12, height = 12, dpi = 300)
+fig_dir <- here::here("output", "figures")
+ggsave(file.path(fig_dir, "sparseMVN_fig4.png"), fig.mvn, width = 12, height = 12, dpi = 300)
 
 
 
