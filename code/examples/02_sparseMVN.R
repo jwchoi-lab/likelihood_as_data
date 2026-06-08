@@ -444,8 +444,23 @@ plot_dat <- df_scores %>%
 plot_dat_bar <- plot_dat %>%
   filter(sim == 2) # One representative data set for Figure 4
 
+target_rug <- purrr::map_dfr(delta_values, function(delta_val) {
+  tibble::tibble(
+    delta = factor(
+      paste0("delta==", round(delta_val, 2)),
+      levels = labels_delta
+    ),
+    k = which(A_vec_for_delta(delta_val, K) == 1)
+  )
+}) %>%
+  tidyr::crossing(sample_size = factor(sample_sizes, levels = sample_sizes)) %>%
+  dplyr::mutate(model = factor(k, levels = seq_len(K), labels = seq_len(K)))
+
 summary_plot <- ggplot(plot_dat_bar, aes(x = model, y = score, fill = delta, color=delta)) +
   geom_col(color = "black", width = 0.8, show.legend = FALSE) +
+  geom_rug(data = target_rug, aes(x = model), inherit.aes = FALSE, sides = "b",
+    color = "red1", linewidth = 1.2, length = unit(0.04, "npc")
+  ) +
   geom_vline(xintercept = seq(1, 7, 1), color = "grey70", linewidth = 0.2, alpha=0.3) +
   geom_hline(yintercept = seq(0, 1, 0.25), color = "grey70", linewidth = 0.2, alpha=0.3) +
   scale_fill_manual(values = c("orange", "purple1", "green3")) +
@@ -603,7 +618,7 @@ fig.mvn
 
 # save for Figure 4
 fig_dir <- here::here("output", "figures")
-ggsave(file.path(fig_dir, "sparseMVN_fig4.png"), fig.mvn, width = 12, height = 12, dpi = 300)
+ggsave(file.path(fig_dir, "sparseMVN_fig4.png"), fig.mvn, width = 12, height = 16, dpi = 300)
 
 
 
