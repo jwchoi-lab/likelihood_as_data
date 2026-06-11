@@ -102,6 +102,7 @@ p_instability <- p1 + p2 + p3
 # save for Figure 2
 # fig_dir <- here::here("output", "figures")
 # ggsave(file.path(fig_dir, "instability_fig2.png"), p_instability, width = 15, height = 5, dpi = 300)
+ggsave(file.path(fig_dir, "instability_fig2.pdf"), p_instability, width = 15, height = 5, device = grDevices::cairo_pdf)
 
 
 

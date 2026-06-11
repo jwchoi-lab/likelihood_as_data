@@ -680,6 +680,7 @@ fig.tpc <- plot_grid(
 # save for Figure 6
 # fig_dir <- here::here("output", "figures")
 # ggsave(file.path(fig_dir, "tpc_fig6.png"), fig.tpc, width = 15, height = 10, dpi = 300)
+ggsave(file.path(fig_dir, "tpc_fig6.pdf"), fig.tpc, width = 15, height = 10, device = grDevices::cairo_pdf)
 
 
 

@@ -332,7 +332,8 @@ pC <- ggplot(L2_stats, aes(K, L2_mean)) +
   geom_errorbar(aes(ymin = L2_mean - L2_sd, ymax = L2_mean + L2_sd), width = 0.2) +
   geom_vline(xintercept = seq(1, K_max, by = 1), color = "grey70", linewidth = 0.2, alpha = 0.3) +
   geom_hline(yintercept = ygrid_L2, color = "grey70", linewidth = 0.2, alpha = 0.3) +
-  labs(title = expression("|" * L*"\u2033"(k) * "|"), x = "k", y = "") +
+  # labs(title = expression("|" * L*"\u2033"(k) * "|"), x = "k", y = "") +
+  labs(title = expression(paste("|", L, second, "(k)", "|")), x = "k", y = "") + 
   scale_x_continuous(breaks = L2_stats$K) +
   theme_bw(base_size = 18) +
   theme(
@@ -375,3 +376,10 @@ evanno_plot <- grid.arrange(pA, pB, pD, ncol = 3)
 # fig_dir <- here::here("output", "figures")
 # ggsave(file.path(fig_dir, "admixture_figS1.png"), fig.ad, width = 15, height = 5, dpi = 300)
 # ggsave(file.path(fig_dir, "admixture_figS2.png"), evanno_plot, width = 15, height = 5, dpi = 300)
+
+ggsave(file.path(fig_dir, "admixture_figS1.pdf"), fig.ad, width = 15, height = 5, device = grDevices::cairo_pdf)
+ggsave(file.path(fig_dir, "admixture_figS2.pdf"), evanno_plot, width = 15, height = 5, device = grDevices::cairo_pdf)
+
+
+
+

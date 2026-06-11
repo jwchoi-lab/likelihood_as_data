@@ -214,6 +214,7 @@ fig1 <- gridExtra::grid.arrange(p_left, p_mid, p_right, ncol = 3)
 # save for Figure 1
 # fig_dir <- here::here("output", "figures")
 # ggsave(file.path(fig_dir, "shapley_fig1.png"), fig1, width = 15, height = 5, dpi = 300)
+ggsave(file.path(fig_dir, "shapley_fig1.pdf"), fig1, width = 15, height = 5, device = grDevices::cairo_pdf)
 
 
 
@@ -521,6 +522,7 @@ fig.gmm
 
 # fig_dir <- here::here("output", "figures")
 # ggsave(file.path(fig_dir, "shapley_fig3.png"), fig.gmm, width = 15, height = 20, dpi = 300)
+ggsave(file.path(fig_dir, "shapley_fig3.pdf"), fig.gmm, width = 15, height = 20, device = grDevices::cairo_pdf)
 
 
 
