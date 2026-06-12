@@ -121,9 +121,6 @@ results_Z <- lapply(results_Z,  function(Z) Z[, 1:10])
 
 
 
-
-
-
 # -------------------------------------------------------------------
 # Figure 1
 # -------------------------------------------------------------------
@@ -209,6 +206,19 @@ p_right <- ggplot(winners, aes(x = sample_size_fac, y = K,
 
 
 fig1 <- gridExtra::grid.arrange(p_left, p_mid, p_right, ncol = 3)
+
+
+# fig1 <- cowplot::plot_grid(
+#   p_left, p_mid, p_right,
+#   ncol = 3, align = "h", axis = "tb",
+#   labels = c("(A)", "(B)", "(C)"),
+#   label_size = 22,
+#   label_fontface = "bold",
+#   label_x = 0.02,
+#   label_y = 0.98,
+#   hjust = 0,
+#   vjust = 1
+# )
 
 
 # save for Figure 1
@@ -517,6 +527,20 @@ fig.gmm <- plot_grid(
   ncol = 1, align = "v", axis = "l",
   rel_heights = c(1, 1, 1.2, 1.3) 
 )
+
+# fig.gmm <- plot_grid(
+#   p_row1, p_row2a, p_row3, p_row4,
+#   ncol = 1, align = "v", axis = "l",
+#   rel_heights = c(1, 1, 1.2, 1.3),
+#   labels = c("(A)", "(B)", "(C)", "(D)"),
+#   label_size = 22,
+#   label_fontface = "bold",
+#   label_x = 0.005,
+#   label_y = 0.995,
+#   hjust = 0,
+#   vjust = 1
+# )
+
 fig.gmm
 
 

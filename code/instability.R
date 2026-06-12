@@ -1,6 +1,7 @@
 library(mvtnorm)
 library(patchwork)
 library(ggtern)
+library(cowplot)
 
 set.seed(251111)
 
@@ -97,6 +98,18 @@ p3 <- ggplot(df, aes(min12, mu3)) +
   )
 
 p_instability <- p1 + p2 + p3
+
+# p_instability <- cowplot::plot_grid(
+#   p1, p2, p3,
+#   ncol = 3, align = "h", axis = "tb",
+#   labels = c("(A)", "(B)", "(C)"),
+#   label_size = 22,
+#   label_fontface = "bold",
+#   label_x = 0.02,
+#   label_y = 0.98,
+#   hjust = 0,
+#   vjust = 1
+# )
 
 
 # save for Figure 2

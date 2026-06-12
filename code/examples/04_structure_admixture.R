@@ -228,6 +228,19 @@ fig.ad <- plot_grid(
   rel_widths = c(1, 1.2) 
 )
 
+fig.ad <- plot_grid(
+  p_mu, p_heat,
+  ncol = 2, align = "v", axis = "l",
+  rel_widths = c(1, 1.2),
+  labels = c("(A)", "(B)"),
+  label_size = 22,
+  label_fontface = "bold",
+  label_x = 0.02,
+  label_y = 0.98,
+  hjust = 0.25,
+  vjust = 1
+)
+
 
 
 
@@ -369,7 +382,20 @@ pD <- ggplot(evanno_df, aes(K, DeltaK)) +
     axis.title.y = element_text(angle = 0, vjust = 0.5, margin = margin(r = 5))
   ) + theme(plot.margin = margin(10, 12, 10, 12)) 
 
+
 evanno_plot <- grid.arrange(pA, pB, pD, ncol = 3)
+
+# evanno_plot <- cowplot::plot_grid(
+#   pA, pB, pD,
+#   ncol = 3, align = "h", axis = "tb",
+#   labels = c("(A)", "(B)", "(C)"),
+#   label_size = 22,
+#   label_fontface = "bold",
+#   label_x = 0.02,
+#   label_y = 0.98,
+#   hjust = 0,
+#   vjust = 1
+# )
 
 
 # save for Figure S1 and S2

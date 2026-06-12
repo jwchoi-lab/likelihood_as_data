@@ -614,6 +614,20 @@ fig.mvn <- plot_grid(
   ncol = 1, align = "v", axis = "l",
   rel_heights = c(2, 1, 1.5) 
 )
+
+# fig.mvn <- plot_grid(
+#   summary_plot, p_mu, p_path,
+#   ncol = 1, align = "v", axis = "l",
+#   rel_heights = c(2, 1, 1.5),
+#   labels = c("(A)", "(B)", "(C)"),
+#   label_size = 22,
+#   label_fontface = "bold",
+#   label_x = 0.005,
+#   label_y = 0.995,
+#   hjust = 0,
+#   vjust = 1
+# )
+
 fig.mvn
 
 
